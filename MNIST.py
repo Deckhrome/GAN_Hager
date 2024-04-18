@@ -35,7 +35,7 @@ test_loader = torch.utils.data.DataLoader(dataset=test_dataset, batch_size=bs, s
 # build network
 z_dim = 100
 mnist_dim = train_dataset.train_data.size(1) * train_dataset.train_data.size(2)
-print(mnist_dim);
+
 G = Generator(g_input_dim = z_dim, g_output_dim = mnist_dim).to(device)
 D = Discriminator(mnist_dim).to(device)
 
