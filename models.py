@@ -34,16 +34,13 @@ class Generator2(nn.Module):
         self.z_dim = z_dim
         self.image_channels = image_channels
         
-        # Dimension after the linear layer
-        self.fc = nn.Linear(z_dim, 369 * 340 * 3)  # Adjust this dimension to match the desired image size
+        self.fc = nn.Linear(z_dim, 369 * 340 * 3)
         
-        # Convolutional Layers
         self.conv = nn.Conv2d(3, image_channels, kernel_size=3, stride=1, padding=1)
         
-        self._init_weights()  # Initialize weights
-
+        self._init_weights()  
     def _init_weights(self):
-        # Custom weight initialization for the Conv2d layer
+
         nn.init.xavier_uniform_(self.conv.weight)
         nn.init.zeros_(self.conv.bias)
 

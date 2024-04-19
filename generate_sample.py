@@ -1,24 +1,22 @@
 import torch
+import torch.nn.functional as F
 from torchvision.utils import save_image
-from generator import Generator 
+from models import Generator2  # Import your Generator2 model definition
 
-# Définir les paramètres nécessaires
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-z_dim = 100  # Dimension de l'espace latent
-image_dim = 369 * 340 * 3  # Dimensions de vos images
+def generate_samples(model_path, output_path, z_dim=1000, num_samples=1):
 
-def generate_samples():
-    G = Generator(g_input_dim=z_dim, g_output_dim=image_dim).to(device)
-    G.load_state_dict(torch.load('model_saved/generator_model.pth', map_location=device))
-    G.eval()
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    generator = Generator2(z_dim=z_dim, image_channels=3).to(device)
+    generator.load_state_dict(torch.load(model_path, map_location=device))
+    generator.eval()
 
     with torch.no_grad():
-        bs = 1
-        z_sample = torch.randn(bs, z_dim).to(device)
-        generated_images = G(z_sample).cpu().detach()
+        z_samples = torch.randn(num_samples, z_dim, device=device)
+        generated_images = generator(z_samples)
+        save_image(generated_images, output_path, nrow=num_samples, normalize=True)
 
-    save_image(generated_images, 'samples/generated_samples.png', nrow=5, normalize=True)
+model_path = 'model_saved/generator_model.pth' 
+output_path = 'samples/generated_samples1.png'  
+num_samples = 1              
 
-
-
-generate_samples()
+generate_samples(model_path, output_path, num_samples=num_samples)

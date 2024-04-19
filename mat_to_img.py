@@ -1,20 +1,15 @@
 import os
+from zipfile import ZipFile, BadZipFile
+from scipy.io import loadmat
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import stft
-from scipy.io import loadmat
+import pickle
 
-def list_mat_files(directory):
-    mat_files = []
-    for filename in os.listdir(directory):
-        if filename.endswith(".mat"):
-            mat_files.append(os.path.join(directory, filename))
-    return mat_files
-
-def ImgFrMat(mat_file, save_directory='images/'):
+def ImgFrMat(mat_file, save_directory):
     mat_data = loadmat(mat_file)
     fs = 4000
-    name_val = ['current']
+    name_val = ['voltage']
     current = np.squeeze(mat_data['current'])
     voltage = np.squeeze(mat_data['voltage'])
 
@@ -57,11 +52,17 @@ def ImgFrMat(mat_file, save_directory='images/'):
         except Exception as e:
             print(f'Error processing {name}: {e}')
 
+
+def list_mat_files(directory):
+    mat_files = []
+    for filename in os.listdir(directory):
+        if filename.endswith(".mat"):
+            mat_files.append(os.path.join(directory, filename))
+    return mat_files
+
 mat_directory = "extracted/SDIA/"
-save_directory = "spectrogram/spect_current_save/"
+save_directory  = "spectrogram/img_save/"
+all_path = list_mat_files(mat_directory)
 
-# Récupérer la liste des chemins des fichiers .mat dans le répertoire spécifié
-all_mat_paths = list_mat_files(mat_directory)
-
-for mat_file in all_mat_paths:
-    ImgFrMat(mat_file, save_directory)
+for mat_path in all_path:
+    ImgFrMat(mat_path,save_directory)
