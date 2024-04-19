@@ -1,5 +1,6 @@
 # prerequisites
 import os
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -48,7 +49,7 @@ class Discriminator(nn.Module):
     
 class Generator2(nn.Module):
     def __init__(self, z_dim, image_channels, hidden_dim=64):
-        super(Generator, self).__init__()
+        super(Generator2, self).__init__()
         self.z_dim = z_dim
         self.image_channels = image_channels
 
@@ -79,7 +80,7 @@ class Generator2(nn.Module):
 
 class Discriminator2(nn.Module):
     def __init__(self, image_channels, hidden_dim=64):
-        super(Discriminator, self).__init__()
+        super(Discriminator2, self).__init__()
         self.image_channels = image_channels
 
         self.net = nn.Sequential(
@@ -101,42 +102,45 @@ class Discriminator2(nn.Module):
     def forward(self, x):
         return self.net(x).view(-1, 1)
 
-G = Generator(g_input_dim=z_dim, g_output_dim=image_dim).to(device)
-D = Discriminator(d_input_dim=image_dim).to(device)
+image_channels = 3  # Nombre de canaux pour les images RGB
+#G = Generator2(z_dim=z_dim, image_channels=image_channels).to(device)
+D = Discriminator2(image_channels=image_channels).to(device)
 
 lr_G = 0.0002
 lr_D = 0.0001
 # Entraînement du modèle GAN
 criterion = nn.BCELoss()
-G_optimizer = optim.Adam(G.parameters(), lr=lr_G)
+#G_optimizer = optim.Adam(G.parameters(), lr=lr_G)
 D_optimizer = optim.Adam(D.parameters(), lr=lr_D)
 
 def D_train(x):
     D.zero_grad()
 
-    x_real, y_real = x.view(-1, image_dim), torch.ones(x.size(0), 1)  # Utilisez x.size(0) pour obtenir le batch size correct
-    x_real, y_real = Variable(x_real.to(device)), Variable(y_real.to(device))
+    batch_size = x.size(0)  # Obtenir la taille du batch
+    x_real, y_real = x.view(-1, image_dim), torch.ones(batch_size, 1)  # Utiliser batch_size pour obtenir le bon nombre de labels
+    x_real, y_real = x_real.to(device), y_real.to(device)
 
     D_output = D(x_real)
     D_real_loss = criterion(D_output, y_real)
 
-    z = Variable(torch.randn(x.size(0), z_dim).to(device))  # Utilisez x.size(0) pour générer le bon batch de bruit
-    x_fake, y_fake = G(z), Variable(torch.zeros(x.size(0), 1).to(device))
+    z = torch.randn(batch_size, z_dim).to(device)  # Générer du bruit correspondant à la taille du batch
+    x_fake, y_fake = G(z), torch.zeros(batch_size, 1).to(device)
 
-    D_output = D(x_fake.detach())  # Détachez les sorties du générateur pour éviter le calcul du gradient à travers G
+    D_output = D(x_fake.detach())  # Détacher les sorties du générateur pour éviter le calcul du gradient à travers G
     D_fake_loss = criterion(D_output, y_fake)
 
     D_loss = D_real_loss + D_fake_loss
     D_loss.backward()
     D_optimizer.step()
 
-    return D_loss.data.item()
+    return D_loss.item()  # Utiliser .item() pour extraire la valeur scalaire du loss tensor
 
-def G_train(x):
+def G_train():
     G.zero_grad()
 
-    z = Variable(torch.randn(bs, z_dim).to(device))
-    y = Variable(torch.ones(bs, 1).to(device))
+    batch_size = x.size(0)  # Obtenir la taille du batch
+    z = torch.randn(batch_size, z_dim).to(device)
+    y = torch.ones(batch_size, 1).to(device)  # Utiliser batch_size pour obtenir le bon nombre de labels
 
     G_output = G(z)
     D_output = D(G_output)
@@ -145,19 +149,51 @@ def G_train(x):
     G_loss.backward()
     G_optimizer.step()
 
-    return G_loss.data.item()
+    return G_loss.item()  # Utiliser .item() pour extraire la valeur scalaire du loss tensor
 
-n_epoch = 11
-for epoch in range(1, n_epoch+1):
-    D_losses, G_losses = [], []
-    for batch_idx, (x, _) in enumerate(train_loader):
-        D_losses.append(D_train(x))
-        G_losses.append(G_train(x))
 
-    print('[%d/%d]: loss_d: %.3f, loss_g: %.3f' % (
-             (epoch), n_epoch, torch.mean(torch.FloatTensor(D_losses)), torch.mean(torch.FloatTensor(G_losses))))
+# n_epoch = 11
+# for epoch in range(1, n_epoch+1):
+#     D_losses, G_losses = [], []
+#     for batch_idx, (x, _) in enumerate(train_loader):
+#         D_losses.append(D_train(x))
+#         G_losses.append(G_train())
+
+#     print('[%d/%d]: loss_d: %.3f, loss_g: %.3f' % (
+#              epoch, n_epoch, torch.mean(torch.FloatTensor(D_losses)), torch.mean(torch.FloatTensor(G_losses))))
     
 
-# Save
-torch.save(G.state_dict(), 'model_saved/generator_model.pth')
-torch.save(D.state_dict(), 'model_saved/discriminator_model.pth')
+# # Save
+# torch.save(G.state_dict(), 'model_saved/generator_model.pth')
+# torch.save(D.state_dict(), 'model_saved/discriminator_model.pth')
+# Création d'une instance du générateur
+G = Generator2(z_dim=z_dim, image_channels=image_channels)
+
+# Définir la taille du batch et le nombre de canaux de l'image
+batch_size = 1
+image_channels = 3
+
+# Générer du bruit aléatoire
+z_dim = 1000  # Dimensions du vecteur de bruit
+z = torch.randn(batch_size, z_dim).to(device)  # Générer du bruit correspondant à la taille du batch
+
+# Utiliser le générateur pour produire une image
+with torch.no_grad():
+    generated_image = G(z)
+
+# Vérifier les dimensions attendues
+expected_dimensions = (batch_size, image_channels, 369, 340)
+if generated_image.shape == torch.Size(expected_dimensions):
+    print("La dimension de l'image générée est correcte.")
+else:
+    print("La dimension de l'image générée est incorrecte.")
+
+# Détacher le tenseur pour éviter les problèmes avec numpy()
+generated_image_np = generated_image.detach().cpu().numpy()
+
+# Afficher l'image générée
+generated_image_np = generated_image_np.squeeze(0)  # Supprimer la dimension de batch si nécessaire
+plt.imshow(generated_image_np.transpose(1, 2, 0))  # Permuter les dimensions pour l'affichage RGB
+plt.axis('off')
+plt.title('Image générée')
+plt.show()

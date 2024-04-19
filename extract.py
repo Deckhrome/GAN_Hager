@@ -3,7 +3,7 @@ import re
 import shutil
 from zipfile import ZipFile, BadZipFile
 
-def unzip_all_files(input_folder='downloads', output_folder='extracted'):
+def unzip_all_files(input_folder='../data_zip', output_folder='extracted'):
     os.makedirs(output_folder, exist_ok=True)
 
     # List all files in the input folder
