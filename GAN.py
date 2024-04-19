@@ -11,14 +11,14 @@ from torch.autograd import Variable
 from torchvision.utils import save_image
 from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader
-from models import Generator2, Discriminator2
+from models import Generator, Discriminator
 
 # Création des répertoires s'ils n'existent pas
 os.makedirs('model_saved', exist_ok=True)
 os.makedirs('samples', exist_ok=True)
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+print(device)
 transform = transforms.Compose([
     transforms.ToTensor(),  # Convertir en tenseur PyTorch
     transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))  # Normaliser les valeurs
@@ -34,8 +34,8 @@ z_dim = 1000
 image_dim = (3, 369, 340)  # Dimensions des images (nombre de canaux x hauteur x largeur)
 
 # Initialisation du générateur et du discriminateur
-G = Generator2(z_dim=z_dim, image_channels=image_dim[0]).to(device)
-D = Discriminator2(image_channels=image_dim[0]).to(device)
+G = Generator(z_dim=z_dim, image_channels=image_dim[0]).to(device)
+D = Discriminator(image_channels=image_dim[0]).to(device)
 
 lr_G = 0.0002
 lr_D = 0.0001
@@ -85,7 +85,7 @@ def G_train(x):
 
     return G_loss.item()
 
-num_epochs = 40
+num_epochs = 100
 for epoch in range(1, num_epochs + 1):
     D_losses, G_losses = [], []
     for batch_idx, (x, _) in enumerate(train_loader):
@@ -94,6 +94,14 @@ for epoch in range(1, num_epochs + 1):
 
     print('[%d/%d]: loss_d: %.3f, loss_g: %.3f' % (
              epoch, num_epochs, torch.mean(torch.FloatTensor(D_losses)), torch.mean(torch.FloatTensor(G_losses))))
+    
+# plot loss
+plt.figure()
+plt.plot(D_losses, label='Discriminator loss')
+plt.plot(G_losses, label='Generator loss')
+plt.legend()
+plt.savefig('loss.png')
+plt.close()
 
 # Sauvegarde des modèles entraînés
 torch.save(G.state_dict(), 'model_saved/generator_model.pth')
