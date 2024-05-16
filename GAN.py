@@ -12,6 +12,7 @@ from torchvision.utils import save_image
 from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader
 from models import Generator, Discriminator
+import time
 
 # Création des répertoires s'ils n'existent pas
 os.makedirs('model_saved', exist_ok=True)
@@ -30,12 +31,17 @@ train_dataset = ImageFolder(root=image_dir, transform=transform)
 batch_size = 10
 train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
 
-z_dim = 1000
+z_dim = 1000  # Dimension du vecteur latent
 image_dim = (3, 369, 340)  # Dimensions des images (nombre de canaux x hauteur x largeur)
 
 # Initialisation du générateur et du discriminateur
 G = Generator(z_dim=z_dim, image_channels=image_dim[0]).to(device)
 D = Discriminator(image_channels=image_dim[0]).to(device)
+
+G.summary()
+D.summary()
+
+
 
 lr_G = 0.0002
 lr_D = 0.0001
@@ -43,6 +49,9 @@ lr_D = 0.0001
 criterion = nn.BCELoss()
 G_optimizer = optim.Adam(G.parameters(), lr=lr_G)
 D_optimizer = optim.Adam(D.parameters(), lr=lr_D)
+
+# Démarrage du chronomètre
+start_time = time.time()
 
 def D_train(x):
     D.zero_grad()
@@ -95,6 +104,13 @@ for epoch in range(1, num_epochs + 1):
     print('[%d/%d]: loss_d: %.3f, loss_g: %.3f' % (
              epoch, num_epochs, torch.mean(torch.FloatTensor(D_losses)), torch.mean(torch.FloatTensor(G_losses))))
     
+
+# Arrêt du chronomètre et calcul du temps écoulé
+end_time = time.time()
+total_time = end_time - start_time
+
+print(f"Entraînement terminé en {total_time:.2f} secondes.")
+    
 # plot loss
 plt.figure()
 plt.plot(D_losses, label='Discriminator loss')
@@ -104,5 +120,5 @@ plt.savefig('loss.png')
 plt.close()
 
 # Sauvegarde des modèles entraînés
-torch.save(G.state_dict(), 'model_saved/generator_model.pth')
-torch.save(D.state_dict(), 'model_saved/discriminator_model.pth')
+torch.save(G.state_dict(), 'model_saved/generator_model3.pth')
+torch.save(D.state_dict(), 'model_saved/discriminator_model3.pth')

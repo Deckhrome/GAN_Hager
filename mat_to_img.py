@@ -9,7 +9,7 @@ import pickle
 def ImgFrMat(mat_file, save_directory):
     mat_data = loadmat(mat_file)
     fs = 4000
-    name_val = ['voltage']
+    name_val = ['current']
     current = np.squeeze(mat_data['current'])
     voltage = np.squeeze(mat_data['voltage'])
 
